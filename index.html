@@ -1,0 +1,1270 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechCorp Global Network Implementation Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for better readability and aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .section {
+            scroll-margin-top: 100px;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+        /* Navigation styles */
+        .nav-link {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-link:hover {
+            color: #5eead4;
+            transform: scale(1.05);
+        }
+        .nav-link.active {
+            color: #5eead4;
+            font-weight: bold;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #5eead4;
+        }
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background: #1e40af;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            min-width: 150px;
+            z-index: 20;
+        }
+        .dropdown-menu a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: white;
+        }
+        .dropdown-menu a:hover {
+            background: #2563eb;
+            color: #5eead4;
+        }
+        /* Hamburger menu */
+        #nav-toggle {
+            display: none;
+        }
+        #nav-menu {
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            #nav-menu {
+                display: none;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                width: 100%;
+                background: #1e40af;
+                padding: 1rem;
+                transform: translateY(-10px);
+                opacity: 0;
+                pointer-events: none;
+            }
+            #nav-menu.active {
+                display: block;
+                transform: translateY(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+            #nav-toggle {
+                display: block;
+            }
+            .dropdown-menu {
+                position: static;
+                background: #2563eb;
+            }
+        }
+        .collapsible-header {
+            cursor: pointer;
+            background: #e5e7eb;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: background 0.3s ease;
+        }
+        .collapsible-header:hover {
+            background: #d1d5db;
+        }
+        .collapsible-content {
+            display: none;
+            padding: 1rem;
+        }
+        .collapsible-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <!-- Fixed Navigation Bar -->
+    <nav class="bg-gradient-to-r from-blue-800 to-teal-600 text-white fixed top-0 left-0 w-full z-10 shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="text-lg font-bold">TechCorp Network</div>
+            <button id="nav-toggle" class="md:hidden focus:outline-none" aria-label="Toggle navigation">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+            <ul id="nav-menu" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-6 justify-center md:flex">
+                <li><a href="#overview" class="nav-link">Overview</a></li>
+                <li><a href="#topology" class="nav-link">Topology</a></li>
+                <li class="relative dropdown">
+                    <a href="#ip-addressing" class="nav-link">IP Config</a>
+                    <div class="dropdown-menu">
+                        <a href="#ip-addressing" class="nav-link">IP Addressing</a>
+                        <a href="#dhcp" class="nav-link">DHCP</a>
+                    </div>
+                </li>
+                <li class="relative dropdown">
+                    <a href="#devices" class="nav-link">Devices</a>
+                    <div class="dropdown-menu">
+                        <a href="#devices" class="nav-link">Device Models</a>
+                        <a href="#placement" class="nav-link">Placement</a>
+                    </div>
+                </li>
+                <li class="relative dropdown">
+                    <a href="#routing" class="nav-link">Network Config</a>
+                    <div class="dropdown-menu">
+                        <a href="#routing" class="nav-link">Routing</a>
+                        <a href="#vpn" class="nav-link">VPN</a>
+                        <a href="#security" class="nav-link">Security</a>
+                        <a href="#qos" class="nav-link">QoS</a>
+                    </div>
+                </li>
+                <li><a href="#wireless" class="nav-link">Wireless</a></li>
+                <li><a href="#implementation" class="nav-link">Implementation</a></li>
+                <li><a href="#testing" class="nav-link">Testing</a></li>
+                <li><a href="#troubleshooting" class="nav-link">Troubleshooting</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-20">
+        <h1 class="text-4xl font-bold mb-6 text-center text-blue-800">TechCorp Global Network Implementation Guide</h1>
+        <h2 class="text-2xl font-semibold mb-8 text-center text-gray-600">Complete Cisco Packet Tracer Scenario</h2>
+
+        <!-- Company Overview -->
+        <section id="overview" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Company Overview</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>TechCorp Global</strong>: Technology company with operations across multiple UK locations</li>
+                <li><strong>Objective</strong>: Design and implement complete network infrastructure</li>
+            </ul>
+        </section>
+
+        <!-- Network Topology Overview -->
+        <section id="topology" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Network Topology Overview</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>Site Locations</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>London Headquarters: Main office with data center</li>
+                        <li>Manchester Branch: Customer service and development center</li>
+                        <li>Birmingham Office: Small regional sales office</li>
+                        <li>Remote Workers: 50 distributed employees</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Complete IP Addressing Scheme -->
+        <section id="ip-addressing" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Complete IP Addressing Scheme</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>Main Network Ranges</strong>:
+                    <div class="collapsible-header">Toggle Main Network Ranges</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>London HQ</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.0.0/22</li>
+                                    <li>Usable Range: 192.168.0.1–192.168.3.254</li>
+                                    <li>Supports: 1022 hosts</li>
+                                    <li>Devices: 134 (see VLAN breakdown)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Manchester Branch</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.4.0/24</li>
+                                    <li>Usable Range: 192.168.4.1–192.168.4.254</li>
+                                    <li>Supports: 254 hosts</li>
+                                    <li>Devices: 56 (see VLAN breakdown)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Birmingham Office</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.5.0/24</li>
+                                    <li>Usable Range: 192.168.5.1–192.168.5.254</li>
+                                    <li>Supports: 254 hosts</li>
+                                    <li>Devices: 19 (see VLAN breakdown)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Remote VPN Pool</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.6.0/24</li>
+                                    <li>Usable Range: 192.168.6.1–192.168.6.254</li>
+                                    <li>Supports: 254 hosts</li>
+                                    <li>Devices: Up to 50 (remote worker VPN clients)</li>
+                                </ul>
+                            </li>
+                            <li><strong>DMZ Network</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.7.0/24</li>
+                                    <li>Usable Range: 192.168.7.1–192.168.7.254</li>
+                                    <li>Supports: 254 hosts</li>
+                                    <li>Devices: 4 (1 firewall inside interface, 1 DNS server, 1 web server, 1 email server)</li>
+                                </ul>
+                            </li>
+                            <li><strong>WAN Links</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>London to Manchester:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.8.0/30</li>
+                                            <li>Usable Range: 192.168.8.1–192.168.8.2</li>
+                                            <li>Devices: 2 (1 London router interface, 1 Manchester router interface)</li>
+                                        </ul>
+                                    </li>
+                                    <li>London to Birmingham:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.8.4/30</li>
+                                            <li>Usable Range: 192.168.8.5–192.168.8.6</li>
+                                            <li>Devices: 2 (1 London router interface, 1 Birmingham router interface)</li>
+                                        </ul>
+                                    </li>
+                                    <li>Reserved:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.8.8/30</li>
+                                            <li>Usable Range: 192.168.8.9–192.168.8.10</li>
+                                            <li>Devices: 0 (reserved for future use)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li><strong>VLAN Structure and IP Ranges</strong>:
+                    <div class="collapsible-header">Toggle VLAN Structure</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>London HQ VLANs</strong>:
+                                <ul class="list-square ml-6">
+                                    <li><strong>VLAN 10 (MANAGEMENT)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.0.0/26</li>
+                                            <li>Usable Range: 192.168.0.1–192.168.0.62</li>
+                                            <li>Devices: 7</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>1 Router: 192.168.0.1 (Floor 1, Server Room)</li>
+                                                    <li>1 Core Switch: 192.168.0.2 (Floor 1, Server Room)</li>
+                                                    <li>1 Wireless LAN Controller: 192.168.0.50 (Floor 1, Server Room)</li>
+                                                    <li>4 Access Points: 192.168.0.51–192.168.0.54 (Floor 1: AP-FLOOR1 in Server Room, Floor 2: AP-FLOOR2 in IT Office, Floor 3: AP-FLOOR3 in Marketing Office, Floor 4: AP-FLOOR4 in Executive Office)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 20 (FINANCE)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.0.64/26</li>
+                                            <li>Usable Range: 192.168.0.65–192.168.0.126</li>
+                                            <li>Devices: 16</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>15 PCs: 192.168.0.65–192.168.0.79 (Floor 2, Finance Office)</li>
+                                                    <li>1 Printer: 192.168.0.80 (Floor 2, Finance Office)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 30 (IT_DEPT)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.0.128/26</li>
+                                            <li>Usable Range: 192.168.0.129–192.168.0.190</li>
+                                            <li>Devices: 16</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>15 PCs: 192.168.0.129–192.168.0.143 (Floor 2, IT Office)</li>
+                                                    <li>1 Printer: 192.168.0.144 (Floor 2, IT Office)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 40 (GENERAL_OFFICE)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.0.192/26</li>
+                                            <li>Usable Range: 192.168.0.193–192.168.0.254</li>
+                                            <li>Devices: 37</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>8 Reception PCs: 192.168.0.193–192.168.0.200 (Floor 1, Reception Area)</li>
+                                                    <li>4 Security Desk PCs: 192.168.0.201–192.168.0.204 (Floor 1, Security Desk)</li>
+                                                    <li>12 Marketing PCs: 192.168.0.205–192.168.0.216 (Floor 3, Marketing Office)</li>
+                                                    <li>13 Sales PCs: 192.168.0.217–192.168.0.229 (Floor 3, Sales Office)</li>
+                                                    <li>1 Business Printer: 192.168.0.230 (Floor 3, Business Operations Room)</li>
+                                                    <li>10 Executive PCs: 192.168.0.231–192.168.0.240 (Floor 4, Executive Office)</li>
+                                                    <li>5 Board Room Devices: 192.168.0.241–192.168.0.245 (Floor 4, Board Room)</li>
+                                                    <li>1 Executive Printer: 192.168.0.246 (Floor 4, Executive Office)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 50 (GUEST_NETWORK)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.1.0/26</li>
+                                            <li>Usable Range: 192.168.1.1–192.168.1.62</li>
+                                            <li>Devices: 0 (reserved for guest devices, dynamically assigned via DHCP, accessible across all floors)</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 60 (VOIP)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.1.64/26</li>
+                                            <li>Usable Range: 192.168.1.65–192.168.1.126</li>
+                                            <li>Devices: 26</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>1 Printer: 192.168.1.100 (Floor 1, Reception Area)</li>
+                                                    <li>25 VoIP Phones: 192.168.1.65–192.168.1.89 (Floor 3, Business Operations Room)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 70 (SERVERS)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.1.128/26</li>
+                                            <li>Usable Range: 192.168.1.129–192.168.1.190</li>
+                                            <li>Devices: 3</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>1 File Server: 192.168.1.130 (Floor 1, Server Room)</li>
+                                                    <li>1 DHCP Server: 192.168.1.131 (Floor 1, Server Room)</li>
+                                                    <li>1 Database Server: 192.168.1.132 (Floor 1, Server Room)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 80 (DEVELOPMENT)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.1.192/26</li>
+                                            <li>Usable Range: 192.168.1.193–192.168.1.254</li>
+                                            <li>Devices: 0 (reserved for development devices, dynamically assigned via DHCP, accessible across all floors)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Manchester Branch VLANs</strong>:
+                                <ul class="list-square ml-6">
+                                    <li><strong>VLAN 40 (OFFICE_USERS)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.4.0/24</li>
+                                            <li>Usable Range: 192.168.4.1–192.168.4.254</li>
+                                            <li>Assigned Range: 192.168.4.1–192.168.4.100</li>
+                                            <li>Devices: 51</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>1 Router: 192.168.4.1 (Floor 1, Network Room)</li>
+                                                    <li>1 Switch: 192.168.4.2 (Floor 1, Network Room)</li>
+                                                    <li>1 Access Point: 192.168.4.10 (Floor 1, Customer Service Office)</li>
+                                                    <li>25 Customer Service PCs: 192.168.4.11–192.168.4.35 (Floor 1, Customer Service Office)</li>
+                                                    <li>15 Technical Support PCs: 192.168.4.36–192.168.4.50 (Floor 1, Technical Support Office)</li>
+                                                    <li>10 Training Room PCs: 192.168.4.51–192.168.4.60 (Floor 1, Training Room)</li>
+                                                    <li>3 Printers: 192.168.4.61–192.168.4.63 (Floor 1, Customer Service Office)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 80 (DEVELOPMENT)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.4.0/24</li>
+                                            <li>Usable Range: 192.168.4.1–192.168.4.254</li>
+                                            <li>Assigned Range: 192.168.4.101–192.168.4.150</li>
+                                            <li>Devices: 20</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>15 Development Team PCs: 192.168.4.101–192.168.4.115 (Floor 2, Development Office)</li>
+                                                    <li>5 Testing Lab PCs: 192.168.4.116–192.168.4.120 (Floor 2, Testing Lab)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 70 (SERVERS)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.4.0/24</li>
+                                            <li>Usable Range: 192.168.4.1–192.168.4.254</li>
+                                            <li>Assigned Range: 192.168.4.151–192.168.4.200</li>
+                                            <li>Devices: 3</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>1 File Server: 192.168.4.151 (Floor 1, Network Room)</li>
+                                                    <li>1 Print Server: 192.168.4.152 (Floor 1, Network Room)</li>
+                                                    <li>1 Development Server: 192.168.4.153 (Floor 1, Network Room)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Birmingham Office VLANs</strong>:
+                                <ul class="list-square ml-6">
+                                    <li><strong>VLAN 40 (OFFICE_USERS)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.5.0/24</li>
+                                            <li>Usable Range: 192.168.5.1–192.168.5.254</li>
+                                            <li>Assigned Range: 192.168.5.1–192.168.5.50</li>
+                                            <li>Devices: 18</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>1 Router: 192.168.5.1 (Main Office, Network Closet)</li>
+                                                    <li>1 Switch: 192.168.5.2 (Main Office, Network Closet)</li>
+                                                    <li>1 Access Point: 192.168.5.10 (Main Office, Sales Office)</li>
+                                                    <li>12 Sales Team PCs: 192.168.5.11–192.168.5.22 (Main Office, Sales Office)</li>
+                                                    <li>3 Admin Support PCs: 192.168.5.23–192.168.5.25 (Main Office, Admin Office)</li>
+                                                    <li>1 Video Conference Unit: 192.168.5.26 (Main Office, Meeting Room)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>VLAN 70 (SERVERS)</strong>:
+                                        <ul class="list-disc ml-6">
+                                            <li>Network: 192.168.5.0/24</li>
+                                            <li>Usable Range: 192.168.5.1–192.168.5.254</li>
+                                            <li>Assigned Range: 192.168.5.51–192.168.5.100</li>
+                                            <li>Devices: 1</li>
+                                            <li>Device Breakdown:
+                                                <ul class="list-circle ml-6">
+                                                    <li>1 Print Server: 192.168.5.51 (Main Office, Network Closet)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Required Cisco Devices and Exact Models -->
+        <section id="devices" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Required Cisco Devices and Exact Models</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>London Headquarters</strong>:
+                    <div class="collapsible-header">Toggle London HQ Devices</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>Core Network Infrastructure</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Core Router: Cisco 2911 ISR
+                                        <ul class="list-disc ml-6">
+                                            <li>Hostname: LONDON-CORE-R01</li>
+                                            <li>Location: Floor 1, Server Room</li>
+                                            <li>IP: 192.168.0.1 (VLAN 10)</li>
+                                            <li>Interfaces:
+                                                <ul class="list-circle ml-6">
+                                                    <li>Serial0/0/0: 192.168.8.1/30 (to Manchester)</li>
+                                                    <li>Serial0/0/1: 192.168.8.5/30 (to Birmingham)</li>
+                                                    <li>GigabitEthernet0/0: Internet connection (DHCP from ISP)</li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>Core Switch: Cisco Catalyst 3560
+                                        <ul class="list-disc ml-6">
+                                            <li>Hostname: LONDON-CORE-SW01</li>
+                                            <li>Location: Floor 1, Server Room</li>
+                                            <li>Management IP: 192.168.0.2/26</li>
+                                            <li>VLAN interfaces: All VLANs</li>
+                                        </ul>
+                                    </li>
+                                    <li>Distribution Switches (per floor):
+                                        <ul class="list-disc ml-6">
+                                            <li>Floor 1: Cisco Catalyst 2960-24TT (LONDON-SW-F1-01), Room: Server Room</li>
+                                            <li>Floor 2: Cisco Catalyst 2960-24TT (LONDON-SW-F2-01), Room: IT Office</li>
+                                            <li>Floor 3: Cisco Catalyst 2960-24TT (LONDON-SW-F3-01), Room: Business Operations Room</li>
+                                            <li>Floor 4: Cisco Catalyst 2960-24TT (LONDON-SW-F4-01), Room: Executive Office</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Servers (Generic Servers in Packet Tracer)</strong>:
+                                <ul class="list-disc ml-6">
+                                    <li>DNS Server: 192.168.7.10, Room: Floor 1, Server Room</li>
+                                    <li>Web Server: 192.168.7.11, Room: Floor 1, Server Room</li>
+                                    <li>Email Server: 192.168.7.12, Room: Floor 1, Server Room</li>
+                                    <li>File Server: 192.168.1.130, Room: Floor 1, Server Room</li>
+                                    <li>DHCP Server: 192.168.1.131, Room: Floor 1, Server Room</li>
+                                    <li>Database Server: 192.168.1.132, Room: Floor 1, Server Room</li>
+                                </ul>
+                            </li>
+                            <li><strong>Security</strong>:
+                                <ul class="list-disc ml-6">
+                                    <li>ASA Firewall: Cisco ASA 5505
+                                        <ul class="list-circle ml-6">
+                                            <li>Hostname: LONDON-FW-01</li>
+                                            <li>Location: Floor 1, Server Room</li>
+                                            <li>Inside: 192.168.7.1</li>
+                                            <li>Outside: Internet IP (from ISP)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Wireless</strong>:
+                                <ul class="list-disc ml-6">
+                                    <li>Wireless LAN Controller: Cisco 2504
+                                        <ul class="list-circle ml-6">
+                                            <li>Hostname: LONDON-WLC-01</li>
+                                            <li>Location: Floor 1, Server Room</li>
+                                            <li>Management IP: 192.168.0.50</li>
+                                        </ul>
+                                    </li>
+                                    <li>Access Points: Cisco Aironet 1142 (4 units)
+                                        <ul class="list-circle ml-6">
+                                            <li>AP-FLOOR1: 192.168.0.51, Room: Floor 1, Server Room</li>
+                                            <li>AP-FLOOR2: 192.168.0.52, Room: Floor 2, IT Office</li>
+                                            <li>AP-FLOOR3: 192.168.0.53, Room: Floor 3, Business Operations Room</li>
+                                            <li>AP-FLOOR4: 192.168.0.54, Room: Floor 4, Executive Office</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li><strong>Manchester Branch</strong>:
+                    <div class="collapsible-header">Toggle Manchester Devices</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>Network Infrastructure</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Branch Router: Cisco 2811 ISR
+                                        <ul class="list-disc ml-6">
+                                            <li>Hostname: MANCHESTER-R01</li>
+                                            <li>Location: Floor 1, Network Room</li>
+                                            <li>LAN Interface: 192.168.4.1/24</li>
+                                            <li>Serial0/0/0: 192.168.8.2/30 (to London)</li>
+                                            <li>Serial0/0/1: Internet backup connection</li>
+                                        </ul>
+                                    </li>
+                                    <li>Switch: Cisco Catalyst 2960-24TT
+                                        <ul class="list-disc ml-6">
+                                            <li>Hostname: MANCHESTER-SW01</li>
+                                            <li>Location: Floor 1, Network Room</li>
+                                            <li>Management IP: 192.168.4.2/24</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Servers</strong>:
+                                <ul class="list-disc ml-6">
+                                    <li>Local File Server: 192.168.4.151, Room: Floor 1, Network Room</li>
+                                    <li>Print Server: 192.168.4.152, Room: Floor 1, Network Room</li>
+                                    <li>Development Server: 192.168.4.153, Room: Floor 1, Network Room</li>
+                                </ul>
+                            </li>
+                            <li><strong>Wireless</strong>:
+                                <ul class="list-disc ml-6">
+                                    <li>Access Point: Cisco Aironet 1142
+                                        <ul class="list-circle ml-6">
+                                            <li>Hostname: MANCHESTER-AP01</li>
+                                            <li>Location: Floor 1, Customer Service Office</li>
+                                            <li>IP: 192.168.4.10</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li><strong>Birmingham Office</strong>:
+                    <div class="collapsible-header">Toggle Birmingham Devices</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>Network Infrastructure</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Branch Router: Cisco 1841 ISR
+                                        <ul class="list-disc ml-6">
+                                            <li>Hostname: BIRMINGHAM-R01</li>
+                                            <li>Location: Main Office, Network Closet</li>
+                                            <li>LAN Interface: 192.168.5.1/24</li>
+                                            <li>Serial0/0/0: 192.168.8.6/30 (to London)</li>
+                                        </ul>
+                                    </li>
+                                    <li>Switch: Cisco Catalyst 2950-24
+                                        <ul class="list-disc ml-6">
+                                            <li>Hostname: BIRMINGHAM-SW01</li>
+                                            <li>Location: Main Office, Network Closet</li>
+                                            <li>Management IP: 192.168.5.2/24</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Servers</strong>:
+                                <ul class="list-disc ml-6">
+                                    <li>Print Server: 192.168.5.51, Room: Main Office, Network Closet</li>
+                                </ul>
+                            </li>
+                            <li><strong>Wireless</strong>:
+                                <ul class="list-disc ml-6">
+                                    <li>Access Point: Cisco Aironet 1142
+                                        <ul class="list-circle ml-6">
+                                            <li>Hostname: BIRMINGHAM-AP01</li>
+                                            <li>Location: Main Office, Sales Office</li>
+                                            <li>IP: 192.168.5.10</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Device Placement and Port Assignments -->
+        <section id="placement" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Device Placement and Port Assignments</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>London HQ - Floor by Floor</strong>:
+                    <div class="collapsible-header">Toggle London HQ Placement</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>Floor 1 (Ground Level)</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Reception Area:
+                                        <ul class="list-disc ml-6">
+                                            <li>8 PCs: 192.168.0.193–192.168.0.200 (VLAN 40), Room: Reception Area</li>
+                                            <li>1 Printer: 192.168.1.100 (VLAN 60), Room: Reception Area</li>
+                                        </ul>
+                                    </li>
+                                    <li>Security Desk:
+                                        <ul class="list-disc ml-6">
+                                            <li>4 PCs: 192.168.0.201–192.168.0.204 (VLAN 40), Room: Security Desk</li>
+                                        </ul>
+                                    </li>
+                                    <li>Server Room:
+                                        <ul class="list-disc ml-6">
+                                            <li>Core Router (LONDON-CORE-R01): 192.168.0.1 (VLAN 10), Room: Server Room</li>
+                                            <li>Core Switch (LONDON-CORE-SW01): 192.168.0.2 (VLAN 10), Room: Server Room</li>
+                                            <li>Wireless LAN Controller (LONDON-WLC-01): 192.168.0.50 (VLAN 10), Room: Server Room</li>
+                                            <li>Access Point (AP-FLOOR1): 192.168.0.51 (VLAN 10), Room: Server Room</li>
+                                            <li>ASA Firewall (LONDON-FW-01): 192.168.7.1 (DMZ), Room: Server Room</li>
+                                            <li>DNS Server: 192.168.7.10 (DMZ), Room: Server Room</li>
+                                            <li>Web Server: 192.168.7.11 (DMZ), Room: Server Room</li>
+                                            <li>Email Server: 192.168.7.12 (DMZ), Room: Server Room</li>
+                                            <li>File Server: 192.168.1.130 (VLAN 70), Room: Server Room</li>
+                                            <li>DHCP Server: 192.168.1.131 (VLAN 70), Room: Server Room</li>
+                                            <li>Database Server: 192.168.1.132 (VLAN 70), Room: Server Room</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Floor 2 (Administrative)</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>IT Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>15 PCs: 192.168.0.129–192.168.0.143 (VLAN 30), Room: IT Office</li>
+                                            <li>1 Printer: 192.168.0.144 (VLAN 30), Room: IT Office</li>
+                                            <li>Access Point (AP-FLOOR2): 192.168.0.52 (VLAN 10), Room: IT Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Finance Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>15 PCs: 192.168.0.65–192.168.0.79 (VLAN 20), Room: Finance Office</li>
+                                            <li>1 Printer: 192.168.0.80 (VLAN 20), Room: Finance Office</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Floor 3 (Business Operations)</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Marketing Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>12 PCs: 192.168.0.205–192.168.0.216 (VLAN 40), Room: Marketing Office</li>
+                                            <li>Access Point (AP-FLOOR3): 192.168.0.53 (VLAN 10), Room: Marketing Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Sales Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>13 PCs: 192.168.0.217–192.168.0.229 (VLAN 40), Room: Sales Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Business Operations Room:
+                                        <ul class="list-disc ml-6">
+                                            <li>25 VoIP Phones: 192.168.1.65–192.168.1.89 (VLAN 60), Room: Business Operations Room</li>
+                                            <li>1 Business Printer: 192.168.0.230 (VLAN 40), Room: Business Operations Room</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Floor 4 (Executive)</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Executive Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>10 PCs: 192.168.0.231–192.168.0.240 (VLAN 40), Room: Executive Office</li>
+                                            <li>1 Executive Printer: 192.168.0.246 (VLAN 40), Room: Executive Office</li>
+                                            <li>Access Point (AP-FLOOR4): 192.168.0.54 (VLAN 10), Room: Executive Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Board Room:
+                                        <ul class="list-disc ml-6">
+                                            <li>5 Devices: 192.168.0.241–192.168.0.245 (VLAN 40), Room: Board Room</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li><strong>Manchester Branch</strong>:
+                    <div class="collapsible-header">Toggle Manchester Placement</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>Floor 1</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Customer Service Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>25 PCs: 192.168.4.11–192.168.4.35 (VLAN 40), Room: Customer Service Office</li>
+                                            <li>3 Printers: 192.168.4.61–192.168.4.63 (VLAN 40), Room: Customer Service Office</li>
+                                            <li>Access Point (MANCHESTER-AP01): 192.168.4.10 (VLAN 40), Room: Customer Service Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Technical Support Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>15 PCs: 192.168.4.36–192.168.4.50 (VLAN 40), Room: Technical Support Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Training Room:
+                                        <ul class="list-disc ml-6">
+                                            <li>10 PCs: 192.168.4.51–192.168.4.60 (VLAN 40), Room: Training Room</li>
+                                        </ul>
+                                    </li>
+                                    <li>Network Room:
+                                        <ul class="list-disc ml-6">
+                                            <li>Router (MANCHESTER-R01): 192.168.4.1 (VLAN 40), Room: Network Room</li>
+                                            <li>Switch (MANCHESTER-SW01): 192.168.4.2 (VLAN 40), Room: Network Room</li>
+                                            <li>File Server: 192.168.4.151 (VLAN 70), Room: Network Room</li>
+                                            <li>Print Server: 192.168.4.152 (VLAN 70), Room: Network Room</li>
+                                            <li>Development Server: 192.168.4.153 (VLAN 70), Room: Network Room</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><strong>Floor 2</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Development Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>15 PCs: 192.168.4.101–192.168.4.115 (VLAN 80), Room: Development Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Testing Lab:
+                                        <ul class="list-disc ml-6">
+                                            <li>5 PCs: 192.168.4.116–192.168.4.120 (VLAN 80), Room: Testing Lab</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li><strong>Birmingham Office</strong>:
+                    <div class="collapsible-header">Toggle Birmingham Placement</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>Main Office</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Sales Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>12 PCs: 192.168.5.11–192.168.5.22 (VLAN 40), Room: Sales Office</li>
+                                            <li>Access Point (BIRMINGHAM-AP01): 192.168.5.10 (VLAN 40), Room: Sales Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Admin Office:
+                                        <ul class="list-disc ml-6">
+                                            <li>3 PCs: 192.168.5.23–192.168.5.25 (VLAN 40), Room: Admin Office</li>
+                                        </ul>
+                                    </li>
+                                    <li>Meeting Room:
+                                        <ul class="list-disc ml-6">
+                                            <li>1 Video Conference Unit: 192.168.5.26 (VLAN 40), Room: Meeting Room</li>
+                                        </ul>
+                                    </li>
+                                    <li>Network Closet:
+                                        <ul class="list-disc ml-6">
+                                            <li>Router (BIRMINGHAM-R01): 192.168.5.1 (VLAN 40), Room: Network Closet</li>
+                                            <li>Switch (BIRMINGHAM-SW01): 192.168.5.2 (VLAN 40), Room: Network Closet</li>
+                                            <li>Print Server: 192.168.5.51 (VLAN 70), Room: Network Closet</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Routing Configuration -->
+        <section id="routing" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Routing Configuration</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>OSPF Areas</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Area 0: London HQ (backbone)</li>
+                        <li>Area 1: Manchester Branch (stub area)</li>
+                        <li>Area 2: Birmingham Office (stub area)</li>
+                    </ul>
+                </li>
+                <li><strong>WAN Connections</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>London to Manchester:
+                            <ul class="list-square ml-6">
+                                <li>Network: 192.168.8.0/30</li>
+                                <li>London: Serial0/0/0 - 192.168.8.1</li>
+                                <li>Manchester: Serial0/0/0 - 192.168.8.2</li>
+                            </ul>
+                        </li>
+                        <li>London to Birmingham:
+                            <ul class="list-square ml-6">
+                                <li>Network: 192.168.8.4/30</li>
+                                <li>London: Serial0/0/1 - 192.168.8.5</li>
+                                <li>Birmingham: Serial0/0/0 - 192.168.8.6</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><strong>Internet Connections</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Primary ISP: Through ASA Firewall at London</li>
+                        <li>Backup connections: At Manchester and Birmingham</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- VPN Configuration -->
+        <section id="vpn" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">VPN Configuration</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>Site-to-Site VPN Tunnels</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>London ↔ Manchester: IPSec tunnel over internet backup</li>
+                        <li>London ↔ Birmingham: IPSec tunnel over internet backup</li>
+                    </ul>
+                </li>
+                <li><strong>Remote Access VPN</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>VPN Server: London ASA Firewall</li>
+                        <li>IP Pool: 192.168.6.1–192.168.6.50</li>
+                        <li>Authentication: Local users and certificates</li>
+                        <li>Encryption: AES 256-bit</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- DHCP Pools Configuration -->
+        <section id="dhcp" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">DHCP Pools Configuration</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>London DHCP Server (192.168.1.131)</strong>:
+                    <div class="collapsible-header">Toggle London DHCP</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>VLAN10_MGMT</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.0.0 255.255.255.192</li>
+                                    <li>Gateway: 192.168.0.1</li>
+                                    <li>DNS: 192.168.7.10, 8.8.8.8</li>
+                                    <li>Exclude: 192.168.0.1–192.168.0.10</li>
+                                </ul>
+                            </li>
+                            <li><strong>VLAN20_FINANCE</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.0.64 255.255.255.192</li>
+                                    <li>Gateway: 192.168.0.65</li>
+                                    <li>DNS: 192.168.7.10</li>
+                                    <li>Exclude: 192.168.0.65–192.168.0.70</li>
+                                </ul>
+                            </li>
+                            <li><strong>VLAN30_IT</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.0.128 255.255.255.192</li>
+                                    <li>Gateway: 192.168.0.129</li>
+                                    <li>DNS: 192.168.7.10</li>
+                                    <li>Exclude: 192.168.0.129–192.168.0.135</li>
+                                </ul>
+                            </li>
+                            <li><strong>VLAN40_GENERAL</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.0.192 255.255.255.192</li>
+                                    <li>Gateway: 192.168.0.193</li>
+                                    <li>DNS: 192.168.7.10, 8.8.8.8</li>
+                                    <li>Exclude: 192.168.0.193–192.168.0.200</li>
+                                </ul>
+                            </li>
+                            <li><strong>VLAN50_GUEST</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.1.0 255.255.255.192</li>
+                                    <li>Gateway: 192.168.1.1</li>
+                                    <li>DNS: 8.8.8.8, 8.8.4.4</li>
+                                    <li>Exclude: 192.168.1.1–192.168.1.10</li>
+                                </ul>
+                            </li>
+                            <li><strong>VLAN60_VOIP</strong>:
+                                <ul class="list-square ml-6">
+                                    <li>Network: 192.168.1.64 255.255.255.192</li>
+                                    <li>Gateway: 192.168.1.65</li>
+                                    <li>DNS: 192.168.7.10</li>
+                                    <li>Option 150: 192.168.1.65 (TFTP for phone configs)</li>
+                                    <li>Exclude: 192.168.1.65–192.168.1.70</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li><strong>Manchester DHCP (on router)</strong>:
+                    <ul class="list-circle ml-6">
+                        <li><strong>MANCHESTER_USERS</strong>:
+                            <ul class="list-square ml-6">
+                                <li>Network: 192.168.4.0 255.255.255.0</li>
+                                <li>Gateway: 192.168.4.1</li>
+                                <li>DNS: 192.168.7.10, 8.8.8.8</li>
+                                <li>Exclude: 192.168.4.1–192.168.4.10, 192.168.4.151–192.168.4.200</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><strong>Birmingham DHCP (on router)</strong>:
+                    <ul class="list-circle ml-6">
+                        <li><strong>BIRMINGHAM_USERS</strong>:
+                            <ul class="list-square ml-6">
+                                <li>Network: 192.168.5.0 255.255.255.0</li>
+                                <li>Gateway: 192.168.5.1</li>
+                                <li>DNS: 192.168.7.10, 8.8.8.8</li>
+                                <li>Exclude: 192.168.5.1–192.168.5.10, 192.168.5.51–192.168.5.100</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Security Implementation -->
+        <section id="security" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Security Implementation</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>Access Control Lists (ACLs)</strong>:
+                    <div class="collapsible-header">Toggle ACLs</div>
+                    <div class="collapsible-content">
+                        <ul class="list-circle ml-6">
+                            <li><strong>Finance Department Security</strong>:
+                                <pre>
+ip access-list extended FINANCE_ACL
+ permit tcp 192.168.0.64 0.0.0.63 192.168.7.0 0.0.0.255 eq 443
+ permit tcp 192.168.0.64 0.0.0.63 192.168.1.128 0.0.0.63 eq 1433
+ deny ip 192.168.0.64 0.0.0.63 192.168.1.0 0.0.0.63
+ deny ip 192.168.0.64 0.0.0.63 192.168.4.0 0.0.0.255
+ deny ip 192.168.0.64 0.0.0.63 192.168.5.0 0.0.0.255
+ permit ip 192.168.0.64 0.0.0.63 any
+                                </pre>
+                            </li>
+                            <li><strong>Guest Network Restrictions</strong>:
+                                <pre>
+ip access-list extended GUEST_ACL
+ deny ip 192.168.1.0 0.0.0.63 192.168.0.0 0.0.3.255
+ deny ip 192.168.1.0 0.0.0.63 192.168.4.0 0.0.0.255
+ deny ip 192.168.1.0 0.0.0.63 192.168.5.0 0.0.0.255
+ deny ip 192.168.1.0 0.0.0.63 192.168.7.0 0.0.0.255
+ permit ip 192.168.1.0 0.0.0.63 any
+                                </pre>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li><strong>Port Security</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Maximum MAC addresses per port: 2</li>
+                        <li>Violation action: Restrict</li>
+                        <li>Sticky MAC learning: Enabled</li>
+                    </ul>
+                </li>
+                <li><strong>DHCP Snooping</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Enabled VLANs: 40, 50, 60</li>
+                        <li>Trusted interfaces: Router uplinks and server connections</li>
+                        <li>Rate limiting: 10 packets per second</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Quality of Service (QoS) -->
+        <section id="qos" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Quality of Service (QoS)</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>Traffic Classes</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Voice Traffic (DSCP EF): 30% bandwidth guarantee</li>
+                        <li>Business Critical (DSCP AF31): 25% bandwidth</li>
+                        <li>Standard Business (DSCP AF21): 35% bandwidth</li>
+                        <li>Best Effort: 10% bandwidth</li>
+                    </ul>
+                </li>
+                <li><strong>QoS Policy Application</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Applied on: All router WAN interfaces</li>
+                        <li>Direction: Both inbound and outbound</li>
+                        <li>Queue management: CBWFQ with LLQ for voice</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Wireless Network Configuration -->
+        <section id="wireless" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Wireless Network Configuration</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>SSIDs and Security</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>TechCorp-Corporate: WPA3-Enterprise, VLAN 40</li>
+                        <li>TechCorp-Guest: WPA3-Personal, VLAN 50</li>
+                        <li>TechCorp-Voice: WPA3-Enterprise, VLAN 60</li>
+                        <li>TechCorp-Mgmt: WPA3-Enterprise, VLAN 10 (admin only)</li>
+                    </ul>
+                </li>
+                <li><strong>Power and Channel Settings</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Power level: 3 (medium)</li>
+                        <li>Channel plan: 1, 6, 11 (non-overlapping)</li>
+                        <li>802.11 standards: a/b/g/n enabled</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Implementation Phases -->
+        <section id="implementation" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Implementation Phases</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>Phase 1: Basic Infrastructure</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Place and configure core routers and switches</li>
+                        <li>Configure basic VLANs and trunk links</li>
+                        <li>Set up inter-VLAN routing</li>
+                        <li>Test basic connectivity within each site</li>
+                    </ul>
+                </li>
+                <li><strong>Phase 2: WAN Connectivity</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Configure serial interfaces for WAN links</li>
+                        <li>Implement OSPF routing protocol</li>
+                        <li>Test site-to-site connectivity</li>
+                        <li>Configure internet access and NAT</li>
+                    </ul>
+                </li>
+                <li><strong>Phase 3: Network Services</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Configure DHCP services</li>
+                        <li>Set up DNS servers</li>
+                        <li>Configure wireless infrastructure</li>
+                        <li>Test all network services</li>
+                    </ul>
+                </li>
+                <li><strong>Phase 4: Security Implementation</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Configure ACLs for traffic filtering</li>
+                        <li>Implement port security</li>
+                        <li>Set up VPN tunnels</li>
+                        <li>Configure firewall rules</li>
+                    </ul>
+                </li>
+                <li><strong>Phase 5: Advanced Features</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>Implement QoS policies</li>
+                        <li>Configure network redundancy (HSRP, STP)</li>
+                        <li>Set up network monitoring</li>
+                        <li>Performance optimization</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Testing Checklist -->
+        <section id="testing" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Testing Checklist</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>Connectivity Tests</strong>:
+                    <ul class="list-circle ml-6">
+                        <li><input type="checkbox"> Ping between all VLANs within London</li>
+                        <li><input type="checkbox"> Ping from London to Manchester</li>
+                        <li><input type="checkbox"> Ping from London to Birmingham</li>
+                        <li><input type="checkbox"> Internet access from all sites</li>
+                        <li><input type="checkbox"> VPN connectivity test</li>
+                    </ul>
+                </li>
+                <li><strong>Security Tests</strong>:
+                    <ul class="list-circle ml-6">
+                        <li><input type="checkbox"> Finance VLAN isolation</li>
+                        <li><input type="checkbox"> Guest network restrictions</li>
+                        <li><input type="checkbox"> Port security violations</li>
+                        <li><input type="checkbox"> VPN encryption validation</li>
+                    </ul>
+                </li>
+                <li><strong>Service Tests</strong>:
+                    <ul class="list-circle ml-6">
+                        <li><input type="checkbox"> DHCP address assignment</li>
+                        <li><input type="checkbox"> DNS name resolution</li>
+                        <li><input type="checkbox"> Wireless connectivity</li>
+                        <li><input type="checkbox"> VoIP phone registration</li>
+                    </ul>
+                </li>
+                <li><strong>Performance Tests</strong>:
+                    <ul class="list-circle ml-6">
+                        <li><input type="checkbox"> QoS traffic prioritization</li>
+                        <li><input type="checkbox"> Bandwidth limitations</li>
+                        <li><input type="checkbox"> Failover testing</li>
+                        <li><input type="checkbox"> Load balancing verification</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Troubleshooting Commands -->
+        <section id="troubleshooting" class="section">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-700">Troubleshooting Commands</h2>
+            <ul class="list-disc ml-6">
+                <li><strong>Basic Connectivity</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>show ip interface brief</li>
+                        <li>show ip route</li>
+                        <li>ping [destination]</li>
+                        <li>traceroute [destination]</li>
+                    </ul>
+                </li>
+                <li><strong>VLAN Troubleshooting</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>show vlan brief</li>
+                        <li>show interfaces trunk</li>
+                        <li>show interfaces switchport</li>
+                    </ul>
+                </li>
+                <li><strong>OSPF Troubleshooting</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>show ip ospf neighbor</li>
+                        <li>show ip ospf database</li>
+                        <li>show ip ospf interface</li>
+                    </ul>
+                </li>
+                <li><strong>VPN Troubleshooting</strong>:
+                    <ul class="list-circle ml-6">
+                        <li>show crypto isakmp sa</li>
+                        <li>show crypto ipsec sa</li>
+                        <li>show crypto map</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- JavaScript for Collapsible Sections, Hamburger Menu, and Active Link -->
+    <script>
+        // Collapsible sections
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                content.classList.toggle('active');
+            });
+        });
+
+        // Hamburger menu toggle
+        const navToggle = document.getElementById('nav-toggle');
+        const navMenu = document.getElementById('nav-menu');
+        navToggle.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+
+        // Active link highlighting
+        const navLinks = document.querySelectorAll('.nav-link');
+        function setActiveLink() {
+            const scrollPosition = window.scrollY + 100;
+            navLinks.forEach(link => {
+                const section = document.querySelector(link.getAttribute('href'));
+                if (section && section.offsetTop <= scrollPosition && section.offsetTop + section.offsetHeight > scrollPosition) {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                }
+            });
+        }
+        window.addEventListener('scroll', setActiveLink);
+        setActiveLink(); // Initial call
+    </script>
+</body>
+</html>
